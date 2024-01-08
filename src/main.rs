@@ -23,10 +23,10 @@ struct TerraformMapEntry {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let matches = App::new("Re-importer")
-        .version("1.0")
-        .author("Your Name <your_email@example.com>")
-        .about("Re-imports AWS resources into Terraform configuration")
+    let matches = App::new("re-importer")
+        .version(env!("CARGO_PKG_VERSION"))
+        .author("Tadeo Armenta <contact@tadeoarmenta.com>")
+        .about("Small tool to create Terraform import blocks based on AWS Resource Explorer exported CSV files.")
         .arg(Arg::with_name("csv-file")
              .long("csv-file")
              .takes_value(true)
