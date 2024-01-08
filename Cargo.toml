@@ -2,6 +2,8 @@
 name = "re-importer"
 version = "0.1.0"
 edition = "2021"
+authors = ["Tadeo Armenta <contact@tadeoarmenta.com>"]
+description = "Small tool to create Terraform import blocks based on AWS Resource Explorer exported CSV files."
 
 [dependencies]
 serde = { version = "1.0", features = ["derive"] }
@@ -11,9 +13,10 @@ clap = "2.33"
 
 [package.metadata.deb]
 maintainer = "Tadeo Armenta <contact@tadeoarmenta.com>"
-description = "Small tool to create Terraform import blocks based on AWS Resourse Explorer exported CSV files"
+copyright = "2024, Tadeo Armenta"
 license-file = ["LICENSE", "4"]
 extended-description = """\
-The Re-Importer tool is designed to facilitate the importing of csv files generated from AWS Resource Explorer into Terraform configuration. It reads an exported CSV file from the AWS resource explorer and a JSON mapping file (optional) to generate Terraform import commands.
+Small tool to create Terraform import blocks based on AWS Resource Explorer exported CSV files. 
+The Re-Importer tool is designed to facilitate the importing of CSV files generated from AWS Resource Explorer into Terraform configuration. It reads an exported CSV file from the AWS resource explorer and a JSON mapping file (optional) to generate Terraform import commands.
 """
 depends = "$auto"
