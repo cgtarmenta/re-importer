@@ -2316,6 +2316,21 @@ fn read_terraform_map_from_default() -> Result<Vec<TerraformMapEntry>, Box<dyn E
             "TF": "aws_xray_sampling_rule",
             "AWS": "AWS::XRay::SamplingRule",
             "AWS_RT": "xray:sampling-rule"
+        },
+        {
+            "TF": "aws_db_instance",
+            "AWS": "AWS::RDS::Instance",
+            "AWS_RT": "rds:db"
+        },
+        {
+            "TF": "aws_db_snapshot",
+            "AWS": "AWS::RDS::Snapshot",
+            "AWS_RT": "rds:snapshot"
+        },
+        {
+            "TF": "aws_ebs_snapshot",
+            "AWS": "AWS::EC2::Snapshot",
+            "AWS_RT": "ec2:snapshot"
         }
     ]
     "#;
@@ -2335,23 +2350,37 @@ fn read_csv_records(path: &str) -> Result<Vec<CSVRecord>, Box<dyn Error>> {
 
 fn generate_output(records: Vec<CSVRecord>, map: &[TerraformMapEntry]) -> Result<String, Box<dyn Error>> {
     let mut output = String::new();
+    let mut non_matching_records = Vec::new();
+
     for record in records {
-        if let Some(tf_entry) = map.iter().find(|e| e.aws_rt == record.resource_type) {
-            let resource_name = match record.name.as_deref() {
-                Some("(not tagged)") | None => record.identifier.clone(),
-                Some(name) => name.to_string(),
-            };
-            let formatted = format!(
-                "import {{\n    id = \"{id}\"\n    to = {tf_type}.{resource_name}\n}}\n\n",
-                id = record.identifier,
-                tf_type = tf_entry.tf,
-                resource_name = format_resource_name(&resource_name)
-            );
-            output.push_str(&formatted);
+        match map.iter().find(|e| e.aws_rt == record.resource_type) {
+            Some(tf_entry) => {
+                let resource_name = match record.name.as_deref() {
+                    Some("(not tagged)") | None => record.identifier.clone(),
+                    Some(name) => name.to_string(),
+                };
+                let formatted = format!(
+                    "import {{\n    id = \"{id}\"\n    to = {tf_type}.{resource_name}\n}}\n\n",
+                    id = record.identifier,
+                    tf_type = tf_entry.tf,
+                    resource_name = format_resource_name(&resource_name)
+                );
+                output.push_str(&formatted);
+            }
+            None => non_matching_records.push(record),
         }
     }
+
+    if !non_matching_records.is_empty() {
+        output.push_str("\n/*** Non-matching records: ***/\n");
+        for record in non_matching_records {
+            output.push_str(&format!("/* Identifier: {}, Resource Type: {} - unknown terraform resource */\n", record.identifier, record.resource_type));
+        }
+    }
+
     Ok(output)
 }
+
 
 fn format_resource_name(name: &str) -> String {
     // Implement better formatting logic here
