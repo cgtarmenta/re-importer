@@ -54,8 +54,6 @@ cargo run -- --csv-file <path-to-csv> [--resource-map <path-to-json>] [--output-
 * ```--output-file: (Optional) Path to the output Terraform import file. Defaults to ./imports.tf.```
 * ```--help: Displays usage information```
 
-## License
-* I never knew how to include a licence
 
 ## Author
 [Tadeo Armenta](https://github.com/cgtarmenta)
