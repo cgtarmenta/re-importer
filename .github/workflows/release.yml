@@ -35,7 +35,10 @@ jobs:
 
       - name: Create .deb package
         run: cargo deb
-
+      
+      - name: List .deb files
+        run: ls ./target/debian/
+      
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -53,6 +56,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/debian/re-importer_${{ steps.vars.outputs.version }}.deb
-          asset_name: re-importer_${{ steps.vars.outputs.version }}.deb
+          asset_path: ./target/debian/re-importer_0.1.0_amd64.deb  # Adjust the name accordingly
+          asset_name: re-importer_0.1.0_amd64.deb
           asset_content_type: application/vnd.debian.binary-package
