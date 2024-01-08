@@ -1,8 +1,26 @@
-use clap::{App, Arg};
+use clap::Parser;
+use std::path::PathBuf;
 use csv::ReaderBuilder;
 use serde::Deserialize;
 use std::error::Error;
 use std::fs;
+
+
+#[derive(Parser, Debug)]
+#[command(author = "Tadeo Armenta", version, about)]
+struct Args {
+    /// Path to the exported CSV file from AWS resource explorer
+    #[clap(long, short, value_parser)]
+    csv_file: PathBuf,
+
+    /// Path to the JSON file with mapping between AWS resource types and Terraform resource types. Uses default mapping if not provided
+    #[clap(long, short, value_parser)]
+    resource_map: Option<PathBuf>,
+
+    /// Path to the output Terraform import file (default: ./imports.tf)
+    #[clap(long, short, value_parser, default_value = "./imports.tf")]
+    output_file: PathBuf,
+}
 
 #[derive(Debug, Deserialize)]
 struct CSVRecord {
@@ -21,33 +39,22 @@ struct TerraformMapEntry {
     #[serde(rename = "AWS_RT")]
     aws_rt: String,
 }
-
 fn main() -> Result<(), Box<dyn Error>> {
-    let matches = App::new("re-importer")
-        .version(env!("CARGO_PKG_VERSION"))
-        .author("Tadeo Armenta <contact@tadeoarmenta.com>")
-        .about("Small tool to create Terraform import blocks based on AWS Resource Explorer exported CSV files.")
-        .arg(Arg::with_name("csv-file")
-             .long("csv-file")
-             .takes_value(true)
-             .required(true)
-             .help("Path to the exported CSV file from AWS resource explorer"))
-        .arg(Arg::with_name("resource-map")
-             .long("resource-map")
-             .takes_value(true)
-             .help("Path to the JSON file with mapping between AWS resource types and Terraform resource types. Uses default mapping if not provided"))
-        .arg(Arg::with_name("output-file")
-             .long("output-file")
-             .takes_value(true)
-             .help("Path to the output Terraform import file (default: ./imports.tf)"))
-        .get_matches();
+    let args = Args::parse();
 
-    let csv_file_path = matches.value_of("csv-file").unwrap();
-    let resource_map_path = matches.value_of("resource-map");
-    let output_file_path = matches.value_of("output-file").unwrap_or("./imports.tf");
+    // Convert PathBuf to string slice
+    let csv_file_path = args.csv_file
+        .to_str()
+        .ok_or("Failed to convert csv_file path to string")?;
+    let output_file_path = args.output_file
+        .to_str()
+        .ok_or("Failed to convert output_file path to string")?;
 
-    let terraform_map = match resource_map_path {
-        Some(path) => read_terraform_map_from_file(path)?,
+    let terraform_map = match args.resource_map {
+        Some(path) => {
+            let path_str = path.to_str().ok_or("Failed to convert resource_map path to string")?;
+            read_terraform_map_from_file(path_str)?
+        },
         None => read_terraform_map_from_default()?,
     };
     let records = read_csv_records(csv_file_path)?;
