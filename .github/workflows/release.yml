@@ -1,0 +1,55 @@
+name: Build and Package
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          override: true
+
+      - name: Determine Version
+        id: vars
+        run: echo "::set-output name=version::$(awk -F '[ =\"]+' '$1 == "version" { print $2 }' Cargo.toml)"
+
+      - name: Build release
+        run: cargo build --release
+
+      - name: Install cargo-deb
+        run: cargo install cargo-deb
+
+      - name: Create .deb package
+        run: cargo deb
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
+
+      - name: Upload .deb as Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./target/debian/re-importer_${{ steps.vars.outputs.version }}.deb
+          asset_name: re-importer_${{ steps.vars.outputs.version }}.deb
+          asset_content_type: application/vnd.debian.binary-package
