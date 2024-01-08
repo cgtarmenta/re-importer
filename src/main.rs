@@ -1,13 +1,12 @@
-use clap::Parser;
+use clap::{Parser, crate_authors};
 use std::path::PathBuf;
 use csv::ReaderBuilder;
 use serde::Deserialize;
 use std::error::Error;
 use std::fs;
 
-
 #[derive(Parser, Debug)]
-#[command(author = "Tadeo Armenta", version, about)]
+#[command(author = crate_authors!(",\n"), version, about, long_about)]
 struct Args {
     /// Path to the exported CSV file from AWS resource explorer
     #[clap(long, short, value_parser)]
@@ -2387,7 +2386,6 @@ fn generate_output(records: Vec<CSVRecord>, map: &[TerraformMapEntry]) -> Result
 
     Ok(output)
 }
-
 
 fn format_resource_name(name: &str) -> String {
     // Implement better formatting logic here
